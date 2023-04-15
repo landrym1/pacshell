@@ -166,11 +166,19 @@ function update {
 function main {
 	#build_map_test
 	build_map
+	display
+	tput civis
+	stty -echo
 	for ((i = 0; i < 5; i++)); do
-		display
 		update
+		for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
+			printf "[F"
+		done
+		display
 		sleep 1
 	done
+	tput cnorm
+	stty echo
 	echo "Finished!"
 }
 
