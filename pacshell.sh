@@ -2,16 +2,17 @@
 
 # Pac-Man in a linux terminal
 
-#MAP_WIDTH=27
-#MAP_HEIGHT=40
-MAP_WIDTH=7
-MAP_HEIGHT=7
+MAP_WIDTH=28
+MAP_HEIGHT=28
+#MAP_WIDTH=7
+#MAP_HEIGHT=7
 
 ELEMENT_EMPTY=0
 ELEMENT_WALL=1
 ELEMENT_DOT=2
 ELEMENT_BIG_DOT=3
 ELEMENT_GHOST=4
+ELEMENT_GHOST_WALL=5
 
 ELEMENT_PACMAN_LEFT=6
 ELEMENT_PACMAN_UP=7
@@ -45,6 +46,46 @@ function build_map_test {
 	done
 }
 
+function build_map {
+	map0=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
+        map1=(1 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 1)
+        map2=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
+        map3=(1 3 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 3 1)
+        map4=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
+        map5=(1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1)
+        map6=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
+	map7=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
+	map8=(1 2 2 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 2 2 1)
+	map9=(1 1 1 1 1 1 2 1 1 1 1 1 0 1 1 0 1 1 1 1 1 2 1 1 1 1 1 1)
+	map10=(0 0 0 0 0 1 2 1 1 1 1 1 0 1 1 0 1 1 1 1 1 2 1 0 0 0 0 0)
+	map11=(0 0 0 0 0 1 2 1 1 1 1 1 0 1 1 0 1 1 1 1 1 2 1 0 0 0 0 0)
+	map12=(0 0 0 0 0 1 2 1 1 1 0 0 0 0 0 0 0 0 1 1 1 2 1 0 0 0 0 0)
+	map13=(1 1 1 1 1 1 2 1 1 1 0 1 1 5 5 1 1 0 1 1 1 2 1 1 1 1 1 1)
+	map14=(0 0 0 0 0 0 2 0 0 0 0 1 0 0 0 0 1 0 0 0 0 2 0 0 0 0 0 0)
+	map15=(1 1 1 1 1 1 2 1 1 1 0 1 1 1 1 1 1 0 1 1 1 2 1 1 1 1 1 1)
+	map16=(0 0 0 0 0 1 2 1 1 1 0 0 0 0 0 0 0 0 1 1 1 2 1 0 0 0 0 0)
+	map17=(0 0 0 0 0 1 2 1 1 1 0 1 1 1 1 1 1 0 1 1 1 2 1 0 0 0 0 0)
+	map18=(1 1 1 1 1 1 2 1 1 1 0 1 1 1 1 1 1 0 1 1 1 2 1 1 1 1 1 1)
+	map19=(1 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 1)
+	map20=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
+	map21=(1 3 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 3 1)
+	map22=(1 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 1)
+	map23=(1 1 1 2 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 2 1 1 1)
+	map24=(1 2 2 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 2 2 1)
+	map25=(1 2 1 1 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 1 1 2 1)
+	map26=(1 2 2 2 2 2 2 2 2 2 2 2 2 6 2 2 2 2 2 2 2 2 2 2 2 2 2 1)
+	map27=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
+        pacman_location=(26 13)
+        pacman_direction=0
+        for ((r = 0; r < $MAP_HEIGHT; r++)); do
+                printf -v row "map%d" $r
+                for ((c = 0; c < $MAP_WIDTH; c++)); do
+                        printf -v cell "%s[%d]" $row $c
+                        map[$r,$c]=$(echo ${!cell})
+                done
+        done
+}
+
 function display {
 	printf "Score: %d           Lives: %d\n" $score $lives
 	for ((r = 0; r < $MAP_HEIGHT; r++)); do
@@ -59,6 +100,8 @@ function display {
                                 printf "%c" 'o'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST ]]; then
                                 printf "%c" 'G'
+			elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST_WALL ]]; then
+                                printf "%c" '-'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_LEFT ]]; then
 				printf "%c" ')'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_UP ]]; then
@@ -80,12 +123,18 @@ function update {
 	if [[ $pacman_direction -eq 0 ]]; then
 		new_location[0]=${pacman_location[0]}
 		new_location[1]=$(( ${pacman_location[1]} - 1 ))
+		if [[ new_location[1] -lt 0 ]]; then 
+			new_location[1]=$(( $MAP_WIDTH - 1 ))
+		fi
 	elif [[ pacman_direction -eq 1 ]]; then
 		new_location[0]=$(( ${pacman_location[0]} - 1 ))
                 new_location[1]=${pacman_location[1]}
 	elif [[ pacman_direction -eq 2 ]]; then
 		new_location[0]=${pacman_location[0]}
                 new_location[1]=$(( ${pacman_location[1]} + 1 ))
+		if [[ new_location[1] -eq $MAP_WIDTH ]]; then
+                        new_location[1]=0
+                fi
 	else
 		new_location[0]=$(( ${pacman_location[0]} + 1 ))
                 new_location[1]=${pacman_location[1]}
@@ -115,7 +164,8 @@ function update {
 }
 
 function main {
-	build_map_test
+	#build_map_test
+	build_map
 	for ((i = 0; i < 5; i++)); do
 		display
 		update
