@@ -19,6 +19,8 @@ ELEMENT_PACMAN_UP=7
 ELEMENT_PACMAN_RIGHT=8
 ELEMENT_PACMAN_DOWN=9
 
+DO_DISPLAY_OVERWRITE=1
+
 declare -A map
 
 score=0
@@ -106,9 +108,9 @@ function display {
 				printf "%c" ')'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_UP ]]; then
                                 printf "%c" 'U'
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_RIGHT ]]; then
+			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_RIGHT ]]; then
                                 printf "%c" '('
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_DOWN ]]; then
+			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_DOWN ]]; then
                                 printf "%c" '^'
 			fi
 		done
@@ -120,6 +122,8 @@ function update {
 	# row, col
 	# find new location based on direction
 	declare -a new_location
+	pacman_direction=$(cat direction.txt)
+	rm direction.txt
 	if [[ $pacman_direction -eq 0 ]]; then
 		new_location[0]=${pacman_location[0]}
 		new_location[1]=$(( ${pacman_location[1]} - 1 ))
@@ -151,45 +155,58 @@ function update {
 		map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_EMPTY
 		pacman_location[0]=${new_location[0]}
 		pacman_location[1]=${new_location[1]}
-		if [[ $pacman_direction -eq 0 ]]; then
-			map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_LEFT
-		elif [[ $pacman_direction -eq 1 ]]; then
-                        map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_UP
-		elif [[ $pacman_direction -eq 2 ]]; then
-                        map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_RIGHT
-		else
-                        map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_DOWN
-		fi
 	fi
+	if [[ $pacman_direction -eq 0 ]]; then
+                map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_LEFT
+        elif [[ $pacman_direction -eq 1 ]]; then
+                map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_UP
+        elif [[ $pacman_direction -eq 2 ]]; then
+                map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_RIGHT
+        else
+                map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_DOWN
+        fi
 }
 
 function get_input {
-	read -rs -t 0.25 arrow # Read the next 2 characters quickly
-        case "$arrow" in
-        	'[A') pacman_direction=1;;
-                '[B') pacman_direction=3;;
-                '[C') pacman_direction=2;;
-                '[D') pacman_direction=0;;
+	read -rs -n 1 -t 0.05 arrow
+        case $arrow in
+        	'w') direction=1;;
+                's') direction=3;;
+                'd') direction=2;;
+                'a') direction=0;;
+		*) ;;
         esac
+	echo $direction > direction.txt
 }
 
 function main {
 	#build_map_test
 	build_map
 	display
-	tput civis
-	stty -echo
+	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
+		tput civis
+		stty -echo
+	fi
 	for ((i = 0; i < 100; i++)); do
-		timing=$(time get_input | grep "real" | awk '{print $1}')
+		get_input
+		{ time get_input; } 2> time.txt
+		timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
+		rm time.txt
 		update
-		for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
-			printf "[F"
-		done
+		if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
+			for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
+				printf "[F"
+			done
+		fi
 		display
-		sleep $(( 0.30 - $timing ))
+		delay=$(echo "0.10 - $timing" | bc)
+		sleep $delay
+		#sleep 0.25
 	done
-	tput cnorm
-	stty echo
+	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
+		tput cnorm
+		stty echo
+	fi
 	echo "Finished!"
 }
 
