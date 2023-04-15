@@ -37,32 +37,43 @@ function build_map_test {
 	done
 }
 
-function display {
-	for ((r = 0; r < $MAP_HEIGHT; r++)); do
-		for ((c = 0; c < $MAP_WIDTH; c++)); do
-			if [[ ${map[$r,$c]} -eq $ELEMENT_EMPTY ]]; then
-				printf "%c" ' '
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_WALL ]]; then
-                                printf "%c" '='
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_DOT ]]; then
-                                printf "%c" '.'
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_BIG_DOT ]]; then
-                                printf "%c" 'o'
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST ]]; then
-                                printf "%c" 'G'
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_LEFT ]]; then
-				printf "%c" ')'
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_UP ]]; then
-                                printf "%c" 'U'
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_RIGHT ]]; then
-                                printf "%c" '('
-			elif [[ ${map[$r,$c]} -eq $ELEMENT_DOWN ]]; then
-                                printf "%c" '^'
-			fi
+function display() {
+		for ((r = 0; r < $MAP_HEIGHT; r++)); do
+			for ((c = 0; c < $MAP_WIDTH; c++)); do
+				if [[ ${map[$r,$c]} -eq $ELEMENT_EMPTY ]]; then
+					printf "%s%c" ' '
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_WALL ]]; then
+					printf "%c" '='
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_DOT ]]; then
+					printf "%c" '.'
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_BIG_DOT ]]; then
+					printf "%c" 'o'
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST ]]; then
+					printf "%c" 'G'
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_LEFT ]]; then
+					printf "%c" ')'
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_UP ]]; then
+					printf "%c" 'U'
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_RIGHT ]]; then
+					printf "%c" '('
+				elif [[ ${map[$r,$c]} -eq $ELEMENT_DOWN ]]; then
+					printf "%c" '^'
+				fi
+			done
+			printf "\n"	
 		done
-		printf "\n"	
-	done	
 }
 
 build_map_test
-display
+display 
+tput civis
+stty -echo
+while : 
+do
+	for((i = 0; i < $MAP_HEIGHT; ++i)) do
+		printf "[F"
+	done
+	display
+done
+tput norm
+stty echo
