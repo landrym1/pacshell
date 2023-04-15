@@ -163,19 +163,30 @@ function update {
 	fi
 }
 
+function get_input {
+	read -rs -t 0.25 arrow # Read the next 2 characters quickly
+        case "$arrow" in
+        	'[A') pacman_direction=1;;
+                '[B') pacman_direction=3;;
+                '[C') pacman_direction=2;;
+                '[D') pacman_direction=0;;
+        esac
+}
+
 function main {
 	#build_map_test
 	build_map
 	display
 	tput civis
 	stty -echo
-	for ((i = 0; i < 5; i++)); do
+	for ((i = 0; i < 100; i++)); do
+		timing=$(time get_input | grep "real" | awk '{print $1}')
 		update
 		for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
 			printf "[F"
 		done
 		display
-		sleep 1
+		sleep $(( 0.30 - $timing ))
 	done
 	tput cnorm
 	stty echo
