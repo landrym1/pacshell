@@ -1,2 +1,2 @@
 # pacshell
-The game PACMAN in a shell/command line environment
+The game Pac-Man in a shell/command line environment
