@@ -97,9 +97,9 @@ function display {
 			if [[ ${map[$r,$c]} -eq $ELEMENT_EMPTY ]]; then
 				printf "%c" ' '
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_WALL ]]; then
-                                printf "%c" '='
+                                printf "\033[35m%c\033[35m" '#'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_DOT ]]; then
-                                printf "%c" '.'
+                                printf "\033[36m%c\033[35m" '.'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_BIG_DOT ]]; then
                                 printf "%c" 'o'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST ]]; then
@@ -107,13 +107,13 @@ function display {
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST_WALL ]]; then
                                 printf "%c" '-'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_LEFT ]]; then
-				printf "%c" ')'
+				printf "\033[33m%c\033[35m" ')'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_UP ]]; then
-                                printf "%c" 'U'
+                                printf "\033[33m%c\033[35m" 'U'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_RIGHT ]]; then
-                                printf "%c" '('
+                                printf "\033[33m%c\033[35m" '('
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_DOWN ]]; then
-                                printf "%c" '^'
+                                printf "\033[33m%c\033[35m" '^'
 			fi
 		done
 		printf "\n"	
@@ -155,7 +155,7 @@ function update {
                 (( score += 50 ))
 		(( num_dots-- ))
 	fi
-	if [[ $new_cell -ne $ELEMENT_WALL ]]; then
+	if [[ $new_cell -ne $ELEMENT_WALL ]] && [[ $new_cell -ne $ELEMENT_GHOST_WALL ]]; then
 		map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_EMPTY
 		pacman_location[0]=${new_location[0]}
 		pacman_location[1]=${new_location[1]}
@@ -189,6 +189,8 @@ function get_input {
 
 function main {
 	#build_map_test
+	#file="background.mp3"
+	#mplayer "$file" &
 	build_map
 	display
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
