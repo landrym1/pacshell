@@ -1,0 +1,42 @@
+PseudoCode for Ghost AI
+
+class Node
+    parent 
+    next1
+    next2
+    next3
+    next4
+
+visited #array to marked visited location for the array 
+queue
+
+function search_for_goal (map, current_row, current_column, target, visited) {
+     if agent is in an illegal location (regular wall) when searching for goal {
+        return 
+    }
+
+    mark location as visited
+
+    if agent equals target {
+        return found target through node or linked list, etc
+    }
+    else if current location of grid is anything that is not a 1 {
+            add spot as spot to traverse
+            set parent to backtrack
+    }
+}
+   
+
+function breadth first search {
+
+   while path to target has not been found {
+        call search_for_goal (map, current_row, current_column, target, visited)
+   }
+
+   return node or data structure representing goal
+}
+
+function backTrack {
+    back track back to the starting location and add coordinates to the a separate list
+}
+
