@@ -214,15 +214,9 @@ function display {
 }
 
 function update { 
-	ghostLoc=($ghost)
-
-	if [[ ${ghostLoc[0]} -eq ${pacman_location[0]} ]] && [[ ${ghostLoc[1]} -eq ${pacman_location[1]} ]]; then
-		$lives-=1
-		build_map
-		return
-	fi 
 	# row, col
 	# find new location based on direction
+
 	declare -a new_location
 	pacman_direction=$(cat direction.txt)
 	rm direction.txt
@@ -273,8 +267,7 @@ function update {
 	if [[ $num_dots -eq 0 ]]; then
 		won=1
 	fi
-<<<<<<< HEAD
-=======
+
 	curPos=($ghost)
 	newPos=($ghostNextLoc)
 	map[${curPos[0]},${curPos[1]}]=$elementOn
@@ -283,7 +276,16 @@ function update {
 	elementOn=${map[$y,$x]}
 	map[${newPos[0]},${newPos[1]}]=$ELEMENT_GHOST
 	ghost="$ghostNextLoc"
->>>>>>> 8bb63aab0aef771eda4af016b509f8665d487027
+	#echo "${curPos[@]}"
+	#echo "${pacman_location[@]}"
+	if [[ "${curPos[@]}" == "${pacman_location[@]}" ]] || [[ "${newPos[@]}" == "${pacman_location[@]}" ]]; then
+		lives=$(( lives - 1 ))
+		ghost="14 14"
+		elementOn=0
+		build_map
+		return
+	fi 
+
 }
 
 function get_input {
@@ -302,13 +304,14 @@ function main {
 	#build_map_test
 	#file="background.mp3"
 	#mplayer "$file" &
+	updateCount=0
 	build_map
 	display
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 		tput civis
 		stty -echo
 	fi
-	while [ $won -eq 0 ]; do
+	while [ $won -eq 0 ] && [ $lives -gt 0 ]; do
 		get_input
 		{ time get_input; } 2> time.txt
 		timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
@@ -316,7 +319,9 @@ function main {
 		build_parent
 		build_visited
 		bfs
-		get_path
+		if [ $updateCount -ne 3 ]; then
+			get_path
+		fi
 		update
 		if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 			for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
@@ -325,25 +330,32 @@ function main {
 		fi
 		display
 		delay=$(echo "0.10 - $timing" | bc)
-		sleep $delay
-<<<<<<< HEAD
-=======
-		sleep 0.25
->>>>>>> 8bb63aab0aef771eda4af016b509f8665d487027
+		if (( $(echo "delay > 0.0" | bc) )); then
+			sleep $delay
+		fi
+		updateCount=$(( (updateCount + 1) % 4 ))
 	done
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 		tput cnorm
 		stty echo
 	fi
-	echo "You won!"
-<<<<<<< HEAD
+	if [[ $win -eq 1 ]]; then
+		echo "You won!"
+		pid=$(pgrep mpg321)
+		kill $pid
+		sleep 0.5
+		mpg321 win.mp3
+	else 
+		echo "You lost!"
+		pid=$(pgrep mpg321)
+		kill $pid
+		sleep 0.5
+		mpg321 lose.mp3
+	fi
 
-	pid=$(pgrep mpg321)
-	kill $pid
-=======
->>>>>>> 8bb63aab0aef771eda4af016b509f8665d487027
 }
 
 main
+
 
 
