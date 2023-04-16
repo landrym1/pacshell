@@ -26,7 +26,9 @@ declare -A parent
 declare -A visited
 
 score=0
+num_dots=233
 lives=3
+won=0
 
 declare -a pacman_location
 declare -i pacman_direction
@@ -188,9 +190,9 @@ function display {
 			if [[ ${map[$r,$c]} -eq $ELEMENT_EMPTY ]]; then
 				printf "%c" ' '
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_WALL ]]; then
-                                printf "%c" '—'
+                                printf "\033[35m%c\033[35m" '#'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_DOT ]]; then
-                                printf "%c" '.'
+                                printf "\033[36m%c\033[35m" '.'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_BIG_DOT ]]; then
                                 printf "%c" 'o'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST ]]; then
@@ -198,13 +200,13 @@ function display {
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_GHOST_WALL ]]; then
                                 printf "%c" '-'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_LEFT ]]; then
-				printf "%c" ')'
+				printf "\033[33m%c\033[35m" ')'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_UP ]]; then
-                                printf "%c" 'U'
+                                printf "\033[33m%c\033[35m" 'U'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_RIGHT ]]; then
-                                printf "%c" '('
+                                printf "\033[33m%c\033[35m" '('
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_PACMAN_DOWN ]]; then
-                                printf "%c" '^'
+                                printf "\033[33m%c\033[35m" '^'
 			fi
 		done
 		printf "\n"	
@@ -212,7 +214,13 @@ function display {
 }
 
 function update { 
+	ghostLoc=($ghost)
 
+	if [[ ${ghostLoc[0]} -eq ${pacman_location[0]} ]] && [[ ${ghostLoc[1]} -eq ${pacman_location[1]} ]]; then
+		$lives-=1
+		build_map
+		return
+	fi 
 	# row, col
 	# find new location based on direction
 	declare -a new_location
@@ -242,10 +250,12 @@ function update {
 	new_cell=${map[${new_location[0]},${new_location[1]}]}
 	if [[ $new_cell -eq $ELEMENT_DOT ]]; then
 		(( score += 10 ))
+		(( num_dots-- ))
 	elif [[ $new_cell -eq $ELEMENT_BIG_DOT ]]; then
                 (( score += 50 ))
+		(( num_dots-- ))
 	fi
-	if [[ $new_cell -ne $ELEMENT_WALL ]]; then
+	if [[ $new_cell -ne $ELEMENT_WALL ]] && [[ $new_cell -ne $ELEMENT_GHOST_WALL ]]; then
 		map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_EMPTY
 		pacman_location[0]=${new_location[0]}
 		pacman_location[1]=${new_location[1]}
@@ -258,8 +268,11 @@ function update {
                 map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_RIGHT
         else
                 map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_DOWN
-        fi  
+        fi
 
+	if [[ $num_dots -eq 0 ]]; then
+		won=1
+	fi
 	curPos=($ghost)
 	newPos=($ghostNextLoc)
 	map[${curPos[0]},${curPos[1]}]=$elementOn
@@ -290,16 +303,15 @@ function main {
 		tput civis
 		stty -echo
 	fi
-	for ((i = 0;; i++)); do
+	while [ $won -eq 0 ]; do
 		get_input
 		{ time get_input; } 2> time.txt
-		#timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
-		#rm time.txt
+		timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
+		rm time.txt
 		build_parent
 		build_visited
 		bfs
 		get_path
-		#echo $ghost
 		update
 		if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 			for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
@@ -307,15 +319,15 @@ function main {
 			done
 		fi
 		display
-		#delay=$(echo "0.10 - $timing" | bc)
-		#sleep $delay
-		#sleep 0.25
+		delay=$(echo "0.10 - $timing" | bc)
+		sleep $delay
+		sleep 0.25
 	done
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 		tput cnorm
 		stty echo
 	fi
-	echo "Finished!"
+	echo "You won!"
 }
 
 main
