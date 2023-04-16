@@ -22,6 +22,8 @@ ELEMENT_PACMAN_DOWN=9
 DO_DISPLAY_OVERWRITE=1
 
 declare -A map
+declare -A parent
+declare -A visited
 
 score=0
 num_dots=233
@@ -50,14 +52,18 @@ function build_map_test {
 	done
 }
 
+ghost="14 14"
+elementOn=0
+ghostNextLoc=""
+
 function build_map {
 	map0=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
-        map1=(1 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 1)
-        map2=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
-        map3=(1 3 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 3 1)
-        map4=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
-        map5=(1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1)
-        map6=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
+	map1=(1 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 1)
+	map2=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
+	map3=(1 3 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 3 1)
+	map4=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
+	map5=(1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1)
+	map6=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
 	map7=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
 	map8=(1 2 2 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 2 2 1)
 	map9=(1 1 1 1 1 1 2 1 1 1 1 1 0 1 1 0 1 1 1 1 1 2 1 1 1 1 1 1)
@@ -65,7 +71,7 @@ function build_map {
 	map11=(0 0 0 0 0 1 2 1 1 1 1 1 0 1 1 0 1 1 1 1 1 2 1 0 0 0 0 0)
 	map12=(0 0 0 0 0 1 2 1 1 1 0 0 0 0 0 0 0 0 1 1 1 2 1 0 0 0 0 0)
 	map13=(1 1 1 1 1 1 2 1 1 1 0 1 1 5 5 1 1 0 1 1 1 2 1 1 1 1 1 1)
-	map14=(0 0 0 0 0 0 2 0 0 0 0 1 0 0 0 0 1 0 0 0 0 2 0 0 0 0 0 0)
+	map14=(0 0 0 0 0 0 2 0 0 0 0 1 0 0 4 0 1 0 0 0 0 2 0 0 0 0 0 0)
 	map15=(1 1 1 1 1 1 2 1 1 1 0 1 1 1 1 1 1 0 1 1 1 2 1 1 1 1 1 1)
 	map16=(0 0 0 0 0 1 2 1 1 1 0 0 0 0 0 0 0 0 1 1 1 2 1 0 0 0 0 0)
 	map17=(0 0 0 0 0 1 2 1 1 1 0 1 1 1 1 1 1 0 1 1 1 2 1 0 0 0 0 0)
@@ -89,6 +95,93 @@ function build_map {
                 done
         done
 }
+
+function build_parent {
+	for((i=0; i < $MAP_HEIGHT; ++i)); do 
+		for((j=0; j < $MAP_WIDTH; ++j)); do 
+			parent[$i,$j]="-1 -1"
+		done
+	done
+}
+
+function build_visited {
+	for((i=0; i < $MAP_HEIGHT; ++i)); do 
+		for((j=0; j < $MAP_WIDTH; ++j)); do 
+			visited[$i,$j]=0
+		done
+	done
+}
+
+function print_parent {
+	for((i=0; i < $MAP_HEIGHT; ++i)) do 
+		for((j=0; j < $MAP_WIDTH; ++j)) do 
+			printf "(%s)" "${parent[$i,$j]}"
+		done
+		echo ""
+	done
+}
+
+function print_visited {
+	for((i=0; i < $MAP_HEIGHT; ++i)) do 
+		for((j=0; j < $MAP_WIDTH; ++j)) do 
+			myArr=(${visited[$i,$j]})
+			printf "${myArr[@]} "
+		done
+		echo ""
+	done
+}
+
+function bfs {
+	queue=("$ghost")
+	len="${#queue[@]}"
+	target=${pacman_location[@]}
+	for((i = 0; i < $len; ++i)); do
+		myArr=(${queue[$i]})
+		curPos=${myArr[@]}
+		if [ "$curPos" == "$target" ]; then
+			break
+		fi
+		y=${myArr[0]}
+		x=${myArr[1]}
+		visited[$y,$x]=1
+		if [[ $(( x + 1 )) -lt $MAP_WIDTH ]] && [[ ${visited[$y,$(( x + 1 ))]} -eq 0 ]] && [[ ${map[$y,$(( x + 1 ))]} -ne $ELEMENT_WALL ]]; then
+		 	r=$(( x + 1 ))
+			queue+=("$y $r")
+			parent[$y,$r]="$y $x"
+		fi
+		if [[ $(( x - 1 )) -gt 0 ]] && [[ ${visited[$y,$(( x - 1 ))]} -eq 0 ]] && [[ ${map[$y,$(( x - 1 ))]} -ne $ELEMENT_WALL ]]; then
+		  	r=$(( x - 1 ))
+		  	queue+=("$y $r")
+			parent[$y,$r]="$y $x"
+		fi
+		if [[ $(( y + 1 )) -lt $MAP_WIDTH ]] && [[ ${visited[$(( y + 1 )),$x]} -eq 0 ]] && [[ ${map[$(( y + 1 )),$x]} -ne $ELEMENT_WALL ]]; then
+		  	c=$(( y + 1 ))
+		  	queue+=("$c $x")
+			parent[$c,$x]="$y $x"
+		fi
+		if [[ $(( y - 1 )) -gt 0 ]] && [[ ${visited[$(( y - 1 )),$x]} -eq 0 ]] && [[ ${map[$(( y - 1 )),$x]} -ne $ELEMENT_WALL ]]; then
+		  	c=$(( y - 1 ))
+		  	queue+=("$c $x")
+			parent[$c,$x]="$y $x"
+		fi
+		len="${#queue[@]}"
+	done
+}
+
+function get_path {
+	
+	r=${pacman_location[0]}
+	c=${pacman_location[1]}
+
+	while [ "${parent[$r,$c]}" != "$ghost" ]; do
+		next=${parent[$r,$c]}
+		next=($next)
+		r=${next[0]}
+		c=${next[1]}
+	done
+	ghostNextLoc="$r $c"
+} 
+
 
 function display {
 	printf "Score: %d           Lives: %d\n" $score $lives
@@ -121,6 +214,13 @@ function display {
 }
 
 function update { 
+	ghostLoc=($ghost)
+
+	if [[ ${ghostLoc[0]} -eq ${pacman_location[0]} ]] && [[ ${ghostLoc[1]} -eq ${pacman_location[1]} ]]; then
+		$lives-=1
+		build_map
+		return
+	fi 
 	# row, col
 	# find new location based on direction
 	declare -a new_location
@@ -173,6 +273,17 @@ function update {
 	if [[ $num_dots -eq 0 ]]; then
 		won=1
 	fi
+<<<<<<< HEAD
+=======
+	curPos=($ghost)
+	newPos=($ghostNextLoc)
+	map[${curPos[0]},${curPos[1]}]=$elementOn
+	y=${newPos[0]}
+	x=${newPos[1]}
+	elementOn=${map[$y,$x]}
+	map[${newPos[0]},${newPos[1]}]=$ELEMENT_GHOST
+	ghost="$ghostNextLoc"
+>>>>>>> 8bb63aab0aef771eda4af016b509f8665d487027
 }
 
 function get_input {
@@ -202,6 +313,10 @@ function main {
 		{ time get_input; } 2> time.txt
 		timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
 		rm time.txt
+		build_parent
+		build_visited
+		bfs
+		get_path
 		update
 		if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 			for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
@@ -211,15 +326,22 @@ function main {
 		display
 		delay=$(echo "0.10 - $timing" | bc)
 		sleep $delay
+<<<<<<< HEAD
+=======
+		sleep 0.25
+>>>>>>> 8bb63aab0aef771eda4af016b509f8665d487027
 	done
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 		tput cnorm
 		stty echo
 	fi
 	echo "You won!"
+<<<<<<< HEAD
 
 	pid=$(pgrep mpg321)
 	kill $pid
+=======
+>>>>>>> 8bb63aab0aef771eda4af016b509f8665d487027
 }
 
 main
