@@ -22,7 +22,8 @@ ELEMENT_PACMAN_DOWN=9
 DO_DISPLAY_OVERWRITE=1
 
 declare -A map
-declare -A visited1
+declare -A parent
+declare -A visited
 
 score=0
 lives=3
@@ -49,16 +50,18 @@ function build_map_test {
 	done
 }
 
-ghost1=(14 14)
+ghost="14 14"
+elementOn=0
+ghostNextLoc=""
 
 function build_map {
 	map0=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
-        map1=(1 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 1)
-        map2=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
-        map3=(1 3 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 3 1)
-        map4=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
-        map5=(1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1)
-        map6=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
+	map1=(1 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 1)
+	map2=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
+	map3=(1 3 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 3 1)
+	map4=(1 2 1 1 1 1 2 1 1 1 1 1 2 1 1 2 1 1 1 1 1 2 1 1 1 1 2 1)
+	map5=(1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1)
+	map6=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
 	map7=(1 2 1 1 1 1 2 1 1 2 1 1 1 1 1 1 1 1 2 1 1 2 1 1 1 1 2 1)
 	map8=(1 2 2 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 1 1 2 2 2 2 2 2 1)
 	map9=(1 1 1 1 1 1 2 1 1 1 1 1 0 1 1 0 1 1 1 1 1 2 1 1 1 1 1 1)
@@ -91,50 +94,91 @@ function build_map {
         done
 }
 
-function build_visited {
-	for((i=0; i < $MAP_LENGTH; ++i)); do
-		for((j=0; j < $MAP_WIDTH; ++j)) do
-			visited1[$i,$j]=(0)
+function build_parent {
+	for((i=0; i < $MAP_HEIGHT; ++i)); do 
+		for((j=0; j < $MAP_WIDTH; ++j)); do 
+			parent[$i,$j]="-1 -1"
 		done
 	done
 }
 
+function build_visited {
+	for((i=0; i < $MAP_HEIGHT; ++i)); do 
+		for((j=0; j < $MAP_WIDTH; ++j)); do 
+			visited[$i,$j]=0
+		done
+	done
+}
+
+function print_parent {
+	for((i=0; i < $MAP_HEIGHT; ++i)) do 
+		for((j=0; j < $MAP_WIDTH; ++j)) do 
+			printf "(%s)" "${parent[$i,$j]}"
+		done
+		echo ""
+	done
+}
+
+function print_visited {
+	for((i=0; i < $MAP_HEIGHT; ++i)) do 
+		for((j=0; j < $MAP_WIDTH; ++j)) do 
+			myArr=(${visited[$i,$j]})
+			printf "${myArr[@]} "
+		done
+		echo ""
+	done
+}
 
 function bfs {
-	queue=(${ghost1[@]})
+	queue=("$ghost")
 	len="${#queue[@]}"
-	for((i = 0; i < $(( len / 2 )); ++i)); do
-		y=${queue[$i]}
-		x=${queue[$((i + 1))]}
-		echo ${visited1[$y,$x]}
-		#if [ visited1[$y,$x] -eq 1 ]; then
-		#	continue;
-		#fi
-		visited1[$y,$x]=1
-	        #printf "$x, $y\n"
-		if [[ $(( x + 1 )) -lt $MAP_WIDTH ]] && [[ ${map[$y, $(( x + 1 ))]} -ne $ELEMENT_WALL ]]; then
-			queue+=($y)
-			queue+=($(( x + 1 )))
+	target=${pacman_location[@]}
+	for((i = 0; i < $len; ++i)); do
+		myArr=(${queue[$i]})
+		curPos=${myArr[@]}
+		if [ "$curPos" == "$target" ]; then
+			break
 		fi
-
-		if [[ $(( x - 1 )) -gt 0 ]] && [[ ${map[$y,$(( x - 1 ))]} -ne $ELEMENT_WALL ]]; then
-			queue+=($y)
-			queue+=($(( x - 1 )))
+		y=${myArr[0]}
+		x=${myArr[1]}
+		visited[$y,$x]=1
+		if [[ $(( x + 1 )) -lt $MAP_WIDTH ]] && [[ ${visited[$y,$(( x + 1 ))]} -eq 0 ]] && [[ ${map[$y,$(( x + 1 ))]} -ne $ELEMENT_WALL ]]; then
+		 	r=$(( x + 1 ))
+			queue+=("$y $r")
+			parent[$y,$r]="$y $x"
 		fi
-
-		if [[ $(( y + 1 )) -lt $MAP_WIDTH ]] && [[ ${map[$(( y + 1 )),$x]} -ne $ELEMENT_WALL ]]; then
-			queue+=($(( y + 1 )))
-			queue+=($x)	
+		if [[ $(( x - 1 )) -gt 0 ]] && [[ ${visited[$y,$(( x - 1 ))]} -eq 0 ]] && [[ ${map[$y,$(( x - 1 ))]} -ne $ELEMENT_WALL ]]; then
+		  	r=$(( x - 1 ))
+		  	queue+=("$y $r")
+			parent[$y,$r]="$y $x"
 		fi
-
-		if [[ $(( y - 1 )) -gt 0 ]] && [[ ${map[$(( y - 1 )),$x]} -ne $ELEMENT_WALL ]]; then
-			queue+=($(( y - 1 )))
-			queue+=($x)	
+		if [[ $(( y + 1 )) -lt $MAP_WIDTH ]] && [[ ${visited[$(( y + 1 )),$x]} -eq 0 ]] && [[ ${map[$(( y + 1 )),$x]} -ne $ELEMENT_WALL ]]; then
+		  	c=$(( y + 1 ))
+		  	queue+=("$c $x")
+			parent[$c,$x]="$y $x"
 		fi
+		if [[ $(( y - 1 )) -gt 0 ]] && [[ ${visited[$(( y - 1 )),$x]} -eq 0 ]] && [[ ${map[$(( y - 1 )),$x]} -ne $ELEMENT_WALL ]]; then
+		  	c=$(( y - 1 ))
+		  	queue+=("$c $x")
+			parent[$c,$x]="$y $x"
+		fi
+		len="${#queue[@]}"
 	done
-	#printf "${map[15,14]}"
-	echo "${queue[@]}"
 }
+
+function get_path {
+	
+	r=${pacman_location[0]}
+	c=${pacman_location[1]}
+
+	while [ "${parent[$r,$c]}" != "$ghost" ]; do
+		next=${parent[$r,$c]}
+		next=($next)
+		r=${next[0]}
+		c=${next[1]}
+	done
+	ghostNextLoc="$r $c"
+} 
 
 
 function display {
@@ -168,6 +212,7 @@ function display {
 }
 
 function update { 
+
 	# row, col
 	# find new location based on direction
 	declare -a new_location
@@ -213,7 +258,16 @@ function update {
                 map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_RIGHT
         else
                 map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_DOWN
-        fi
+        fi  
+
+	curPos=($ghost)
+	newPos=($ghostNextLoc)
+	map[${curPos[0]},${curPos[1]}]=$elementOn
+	y=${newPos[0]}
+	x=${newPos[1]}
+	elementOn=${map[$y,$x]}
+	map[${newPos[0]},${newPos[1]}]=$ELEMENT_GHOST
+	ghost="$ghostNextLoc"
 }
 
 function get_input {
@@ -231,7 +285,6 @@ function get_input {
 function main {
 	#build_map_test
 	build_map
-	bfs
 	display
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 		tput civis
@@ -242,6 +295,11 @@ function main {
 		{ time get_input; } 2> time.txt
 		#timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
 		#rm time.txt
+		build_parent
+		build_visited
+		bfs
+		get_path
+		#echo $ghost
 		update
 		if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 			for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
@@ -260,6 +318,4 @@ function main {
 	echo "Finished!"
 }
 
-build_map
-bfs
-#main
+main
