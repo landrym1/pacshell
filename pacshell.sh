@@ -24,7 +24,9 @@ DO_DISPLAY_OVERWRITE=1
 declare -A map
 
 score=0
+num_dots=233
 lives=3
+won=0
 
 declare -a pacman_location
 declare -i pacman_direction
@@ -148,8 +150,10 @@ function update {
 	new_cell=${map[${new_location[0]},${new_location[1]}]}
 	if [[ $new_cell -eq $ELEMENT_DOT ]]; then
 		(( score += 10 ))
+		(( num_dots-- ))
 	elif [[ $new_cell -eq $ELEMENT_BIG_DOT ]]; then
                 (( score += 50 ))
+		(( num_dots-- ))
 	fi
 	if [[ $new_cell -ne $ELEMENT_WALL ]]; then
 		map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_EMPTY
@@ -165,6 +169,10 @@ function update {
         else
                 map[${pacman_location[0]},${pacman_location[1]}]=$ELEMENT_PACMAN_DOWN
         fi
+
+	if [[ $num_dots -eq 0 ]]; then
+		won=1
+	fi
 }
 
 function get_input {
@@ -187,7 +195,7 @@ function main {
 		tput civis
 		stty -echo
 	fi
-	for ((i = 0; i < 100; i++)); do
+	while [ $won -eq 0 ]; do
 		get_input
 		{ time get_input; } 2> time.txt
 		timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
@@ -201,13 +209,12 @@ function main {
 		display
 		delay=$(echo "0.10 - $timing" | bc)
 		sleep $delay
-		#sleep 0.25
 	done
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 		tput cnorm
 		stty echo
 	fi
-	echo "Finished!"
+	echo "You won!"
 }
 
 main
