@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Pac-Man in a linux terminal
-
+mpg321 background.mp3 &
 MAP_WIDTH=28
 MAP_HEIGHT=28
 #MAP_WIDTH=7
@@ -217,6 +217,11 @@ function main {
 		stty echo
 	fi
 	echo "You won!"
+
+	pid=$(pgrep mpg321)
+	kill $pid
 }
 
 main
+
+
