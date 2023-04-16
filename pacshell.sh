@@ -22,6 +22,7 @@ ELEMENT_PACMAN_DOWN=9
 DO_DISPLAY_OVERWRITE=1
 
 declare -A map
+declare -A visited1
 
 score=0
 lives=3
@@ -48,6 +49,8 @@ function build_map_test {
 	done
 }
 
+ghost1=(14 14)
+
 function build_map {
 	map0=(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1)
         map1=(1 2 2 2 2 2 2 2 2 2 2 2 2 1 1 2 2 2 2 2 2 2 2 2 2 2 2 1)
@@ -63,7 +66,7 @@ function build_map {
 	map11=(0 0 0 0 0 1 2 1 1 1 1 1 0 1 1 0 1 1 1 1 1 2 1 0 0 0 0 0)
 	map12=(0 0 0 0 0 1 2 1 1 1 0 0 0 0 0 0 0 0 1 1 1 2 1 0 0 0 0 0)
 	map13=(1 1 1 1 1 1 2 1 1 1 0 1 1 5 5 1 1 0 1 1 1 2 1 1 1 1 1 1)
-	map14=(0 0 0 0 0 0 2 0 0 0 0 1 0 0 0 0 1 0 0 0 0 2 0 0 0 0 0 0)
+	map14=(0 0 0 0 0 0 2 0 0 0 0 1 0 0 4 0 1 0 0 0 0 2 0 0 0 0 0 0)
 	map15=(1 1 1 1 1 1 2 1 1 1 0 1 1 1 1 1 1 0 1 1 1 2 1 1 1 1 1 1)
 	map16=(0 0 0 0 0 1 2 1 1 1 0 0 0 0 0 0 0 0 1 1 1 2 1 0 0 0 0 0)
 	map17=(0 0 0 0 0 1 2 1 1 1 0 1 1 1 1 1 1 0 1 1 1 2 1 0 0 0 0 0)
@@ -88,6 +91,52 @@ function build_map {
         done
 }
 
+function build_visited {
+	for((i=0; i < $MAP_LENGTH; ++i)); do
+		for((j=0; j < $MAP_WIDTH; ++j)) do
+			visited1[$i,$j]=(0)
+		done
+	done
+}
+
+
+function bfs {
+	queue=(${ghost1[@]})
+	len="${#queue[@]}"
+	for((i = 0; i < $(( len / 2 )); ++i)); do
+		y=${queue[$i]}
+		x=${queue[$((i + 1))]}
+		echo ${visited1[$y,$x]}
+		#if [ visited1[$y,$x] -eq 1 ]; then
+		#	continue;
+		#fi
+		visited1[$y,$x]=1
+	        #printf "$x, $y\n"
+		if [[ $(( x + 1 )) -lt $MAP_WIDTH ]] && [[ ${map[$y, $(( x + 1 ))]} -ne $ELEMENT_WALL ]]; then
+			queue+=($y)
+			queue+=($(( x + 1 )))
+		fi
+
+		if [[ $(( x - 1 )) -gt 0 ]] && [[ ${map[$y,$(( x - 1 ))]} -ne $ELEMENT_WALL ]]; then
+			queue+=($y)
+			queue+=($(( x - 1 )))
+		fi
+
+		if [[ $(( y + 1 )) -lt $MAP_WIDTH ]] && [[ ${map[$(( y + 1 )),$x]} -ne $ELEMENT_WALL ]]; then
+			queue+=($(( y + 1 )))
+			queue+=($x)	
+		fi
+
+		if [[ $(( y - 1 )) -gt 0 ]] && [[ ${map[$(( y - 1 )),$x]} -ne $ELEMENT_WALL ]]; then
+			queue+=($(( y - 1 )))
+			queue+=($x)	
+		fi
+	done
+	#printf "${map[15,14]}"
+	echo "${queue[@]}"
+}
+
+
 function display {
 	printf "Score: %d           Lives: %d\n" $score $lives
 	for ((r = 0; r < $MAP_HEIGHT; r++)); do
@@ -95,7 +144,7 @@ function display {
 			if [[ ${map[$r,$c]} -eq $ELEMENT_EMPTY ]]; then
 				printf "%c" ' '
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_WALL ]]; then
-                                printf "%c" '='
+                                printf "%c" '—'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_DOT ]]; then
                                 printf "%c" '.'
 			elif [[ ${map[$r,$c]} -eq $ELEMENT_BIG_DOT ]]; then
@@ -182,16 +231,17 @@ function get_input {
 function main {
 	#build_map_test
 	build_map
+	bfs
 	display
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 		tput civis
 		stty -echo
 	fi
-	for ((i = 0; i < 100; i++)); do
+	for ((i = 0;; i++)); do
 		get_input
 		{ time get_input; } 2> time.txt
-		timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
-		rm time.txt
+		#timing=$(cat time.txt | grep "real" | sed "s|0m||" | sed "s|\s||g" | sed "s|[a-z]||g")
+		#rm time.txt
 		update
 		if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
 			for((j = 0; j < $MAP_HEIGHT + 1; ++j)) do
@@ -199,8 +249,8 @@ function main {
 			done
 		fi
 		display
-		delay=$(echo "0.10 - $timing" | bc)
-		sleep $delay
+		#delay=$(echo "0.10 - $timing" | bc)
+		#sleep $delay
 		#sleep 0.25
 	done
 	if [[ $DO_DISPLAY_OVERWRITE -eq 1 ]]; then
@@ -210,4 +260,6 @@ function main {
 	echo "Finished!"
 }
 
-main
+build_map
+bfs
+#main
